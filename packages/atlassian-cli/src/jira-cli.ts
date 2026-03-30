@@ -7,12 +7,25 @@
  *   jira auth login --client-id ... --client-secret ...
  *   jira get ISSUE-123
  *   jira search "project = MYPROJECT"
+ *   jira create "Fix login bug" --project MYPROJECT
+ *   jira comment add ISSUE-123 "Looks good to me"
+ *   jira transition list ISSUE-123
+ *   jira transition do ISSUE-123 31
+ *   jira project list
+ *   jira board list
+ *   jira sprint list <board-id>
  */
 
 import { Command } from 'commander';
 import { getIssue } from './commands/jira/get-issue.js';
 import { searchIssues } from './commands/jira/search-issues.js';
 import { linkIssues } from './commands/jira/link-issues.js';
+import { createIssue } from './commands/jira/create-issue.js';
+import { addComment, listComments } from './commands/jira/comment.js';
+import { listTransitions, transitionIssue } from './commands/jira/transition.js';
+import { listProjects, getProject } from './commands/jira/project.js';
+import { listSprints, getSprintIssues } from './commands/jira/sprint.js';
+import { listBoards } from './commands/jira/board.js';
 import { loginCommand } from './commands/auth/login.js';
 import { auth, clearToken, loadConfig } from './auth/config.js';
 
@@ -118,6 +131,127 @@ program
   .action(async (sourceIssueKey: string, targetIssueKeys: string[], options: any) => {
     await linkIssues(sourceIssueKey, targetIssueKeys, options);
   });
+
+// Create issue command
+program
+  .command('create <summary>')
+  .description('Create a new Jira issue')
+  .option('-p, --project <key>', 'Project key (or set ATLASSIAN_PROJECT)')
+  .option('-t, --type <type>', 'Issue type (default: Task)', 'Task')
+  .option('--priority <priority>', 'Priority name (e.g. High, Medium, Low)')
+  .option('--assignee <accountId>', 'Assignee account ID')
+  .option('--labels <labels>', 'Comma-separated list of labels')
+  .option('--parent <key>', 'Parent issue key (for sub-tasks)')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(async (summary: string, options: any) => {
+    await createIssue(summary, options);
+  });
+
+// Comment commands
+const commentCmd = program.command('comment').description('Manage issue comments');
+
+commentCmd
+  .command('add <issue-key> <body>')
+  .description('Add a comment to an issue')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(addComment);
+
+commentCmd
+  .command('list <issue-key>')
+  .description('List comments on an issue')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(listComments);
+
+// Transition commands
+const transitionCmd = program.command('transition').description('Manage issue transitions');
+
+transitionCmd
+  .command('list <issue-key>')
+  .description('List available transitions for an issue')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(listTransitions);
+
+transitionCmd
+  .command('do <issue-key> <transition-id>')
+  .description('Transition an issue to a new status')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(transitionIssue);
+
+// Project commands
+const projectCmd = program.command('project').description('Manage Jira projects');
+
+projectCmd
+  .command('list')
+  .description('List Jira projects')
+  .option('-n, --max-results <n>', 'Max number of results', '50')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(listProjects);
+
+projectCmd
+  .command('get <project-key>')
+  .description('Get details of a Jira project')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(getProject);
+
+// Board commands
+const boardCmd = program.command('board').description('Manage Jira boards');
+
+boardCmd
+  .command('list')
+  .description('List Jira boards')
+  .option('-t, --type <type>', 'Board type: scrum or kanban')
+  .option('--project-key <key>', 'Filter by project key')
+  .option('-n, --max-results <n>', 'Max number of results', '50')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(listBoards);
+
+// Sprint commands
+const sprintCmd = program.command('sprint').description('Manage Jira sprints');
+
+sprintCmd
+  .command('list <board-id>')
+  .description('List sprints for a board')
+  .option('--state <state>', 'Filter by state: active, closed, future')
+  .option('-n, --max-results <n>', 'Max number of results', '20')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(listSprints);
+
+sprintCmd
+  .command('issues <sprint-id>')
+  .description('List issues in a sprint')
+  .option('-n, --max-results <n>', 'Max number of results', '50')
+  .option('--json', 'Output pure JSON')
+  .option('-v, --verbose', 'Show verbose output')
+  .option('--token <token>', 'Atlassian API token')
+  .option('--url <url>', 'Atlassian base URL')
+  .action(getSprintIssues);
 
 // Parse arguments
 program.parse();
