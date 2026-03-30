@@ -48,23 +48,20 @@ function unwrapType(type: GraphQLOutputType): {
   isNonNull: boolean;
   isList: boolean;
 } {
-  let isNonNull = false;
+  // The outermost NonNull determines whether the field itself can be null.
+  // We check it once before entering the loop so that inner NonNull wrappers
+  // (e.g. inside a nested list like [[String!]!]) do not override it.
+  const isNonNull = isNonNullType(type);
   let isList = false;
   let current: GraphQLOutputType = type;
 
-  if (isNonNullType(current)) {
-    isNonNull = true;
-    current = current.ofType;
-  }
-
-  if (isListType(current)) {
-    isList = true;
-    const listElement = current.ofType;
-    if (isNonNullType(listElement)) {
-      current = listElement.ofType;
-    } else {
-      current = listElement;
+  // Unwrap all wrapping types (NonNull and List at any nesting depth)
+  // until we reach a named type (scalar, object, enum, interface, union).
+  while (isNonNullType(current) || isListType(current)) {
+    if (isListType(current)) {
+      isList = true;
     }
+    current = (current as { ofType: GraphQLOutputType }).ofType;
   }
 
   return { baseType: current as GraphQLNamedType, isNonNull, isList };

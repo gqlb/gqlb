@@ -95,6 +95,8 @@ type Post {
 type SearchResult {
   totalCount: Int!
   items: [SearchItem!]!
+  """Nested list field (e.g. matrix of strings) to test deep unwrapping"""
+  matrix: [[String!]!]
 }
 
 """Union type for search results"""
