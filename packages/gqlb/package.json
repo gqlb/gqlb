@@ -3,11 +3,10 @@
   "version": "0.1.5",
   "description": "Runtime proxy-based GraphQL query builder with type safety",
   "type": "module",
-  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": "./dist/index.js",
-    "./codegen-utils": "./dist/codegen-utils.js",
+    ".": "./dist/index.mjs",
+    "./codegen-utils": "./dist/codegen-utils.mjs",
     "./package.json": "./package.json"
   },
   "files": [
@@ -42,6 +41,5 @@
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.1.2"
-  },
-  "module": "./dist/index.js"
+  }
 }

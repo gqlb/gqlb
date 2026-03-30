@@ -3,20 +3,10 @@
   "version": "0.1.2",
   "description": "GraphQL Code Generator plugins for gqlb - runtime proxy-based query builder",
   "type": "module",
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "exports": {
-    ".": {
-      "import": "./dist/index.js",
-      "default": "./dist/index.js",
-      "types": "./dist/index.d.ts"
-    },
-    "./field-types": {
-      "import": "./dist/field-types/index.js",
-      "default": "./dist/field-types/index.js",
-      "types": "./dist/field-types/index.d.ts"
-    },
+    ".": "./dist/index.mjs",
+    "./field-types": "./dist/field-types/index.mjs",
     "./package.json": "./package.json"
   },
   "files": [

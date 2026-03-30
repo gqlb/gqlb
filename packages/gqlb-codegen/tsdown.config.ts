@@ -10,9 +10,12 @@ export default defineConfig({
   clean: true,
   target: 'es2020',
   platform: 'node',
-  external: [
-    '@graphql-codegen/plugin-helpers',
-    'graphql'
-  ]
+  exports: true,
+  deps: {
+    neverBundle: [
+      '@graphql-codegen/plugin-helpers',
+      'graphql'
+    ]
+  }
 });
 
