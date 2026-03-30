@@ -18,7 +18,7 @@
     },
     "test:codegen": {
       "executor": "nx:run-commands",
-      "dependsOn": ["^build"],
+      "dependsOn": ["^build", { "projects": "gqlb-codegen", "target": "build" }],
       "options": {
         "command": "npm run test:codegen",
         "cwd": "packages/gqlb"

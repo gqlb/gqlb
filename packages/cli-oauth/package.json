@@ -2,7 +2,6 @@
   "name": "cli-oauth",
   "version": "0.1.5",
   "description": "Generic OAuth 2.0 authentication for CLI applications with async file I/O and atomic writes",
-  "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "type": "module",
   "files": [
@@ -11,7 +10,7 @@
     "LICENSE"
   ],
   "exports": {
-    ".": "./dist/index.js",
+    ".": "./dist/index.mjs",
     "./package.json": "./package.json"
   },
   "keywords": [
@@ -35,5 +34,11 @@
   "license": "MIT",
   "dependencies": {},
   "peerDependencies": {},
-  "module": "./dist/index.js"
+  "inlinedDependencies": {
+    "commander": "14.0.3",
+    "define-lazy-prop": "2.0.0",
+    "is-docker": "2.2.1",
+    "is-wsl": "2.2.0",
+    "open": "8.4.2"
+  }
 }
