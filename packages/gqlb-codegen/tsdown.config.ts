@@ -5,7 +5,7 @@ export default defineConfig({
     'src/index.ts',
     'src/field-types/index.ts'
   ],
-  format: ['cjs', 'esm'],
+  format: ['esm'],
   dts: true,
   clean: true,
   target: 'es2020',
