@@ -183,7 +183,7 @@ jira create <summary> [options]
 
 | Option | Description |
 |---|---|
-| `-p, --project <key>` | Project key **(required**, or set `ATLASSIAN_PROJECT`)  |
+| `-p, --project <key>` | Project key **(required)**, or set `ATLASSIAN_PROJECT` |
 | `-t, --type <type>` | Issue type (default: `Task`) |
 | `--priority <name>` | Priority: `High`, `Medium`, `Low`, etc. |
 | `--assignee <accountId>` | Assignee account ID |
@@ -378,7 +378,7 @@ atlassian confluence create <title> <content> [options]
 
 | Option | Description |
 |---|---|
-| `-s, --space-key <key>` | Space key **(required**, or set `CONFLUENCE_SPACE_KEY`) |
+| `-s, --space-key <key>` | Space key **(required)**, or set `CONFLUENCE_SPACE_KEY` |
 | `--parent-id <id>` | Parent page ID |
 | `--json` | Raw JSON output |
 
