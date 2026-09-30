@@ -1,14 +1,16 @@
 import type { GraphQLSchema, GraphQLType, GraphQLNamedType, GraphQLObjectType, GraphQLField, GraphQLInterfaceType } from 'graphql';
-import { 
-  isObjectType, 
+import {
+  isObjectType,
   isInterfaceType,
-  isScalarType, 
+  isScalarType,
   isEnumType,
+  isInputObjectType,
   isListType,
   isNonNullType,
   getNamedType,
   parse
 } from 'graphql';
+import type { GraphQLInputType } from 'graphql';
 import type { TypedDocumentNode } from '@graphql-typed-document-node/core';
 import type { QueryBuilder, SelectionFn, FieldSelection, BuildContext } from './types.js';
 import { isVariable } from './variables.js';
@@ -496,6 +498,12 @@ function createFieldSelection(
 }
 
 /**
+ * Marker key for enum literal values — strings that must be emitted
+ * unquoted (GraphQL enum values are not String literals).
+ */
+const ENUM_LITERAL = '__gqlbEnum';
+
+/**
  * Process field arguments and extract variables
  */
 function processArguments(
@@ -506,52 +514,67 @@ function processArguments(
   const processed: Record<string, any> = {};
 
   for (const [argName, argValue] of Object.entries(args)) {
-    if (isVariable(argValue)) {
-      // Register variable
-      const fieldArg = field.args.find(a => a.name === argName);
-      if (fieldArg) {
-        const typeName = printType(fieldArg.type);
-        context.variables.set(argValue.name, {
-          type: typeName,
-          required: isNonNullType(fieldArg.type) || argValue.required,
-        });
-      }
-      processed[argName] = `$${argValue.name}`;
-    } else if (typeof argValue === 'object' && argValue !== null) {
-      // Recursively process nested arguments
-      processed[argName] = processNestedArgument(argValue, context);
-    } else {
-      processed[argName] = argValue;
-    }
+    const fieldArg = field.args.find(a => a.name === argName);
+    processed[argName] = processArgumentValue(argValue, fieldArg?.type, context);
   }
 
   return processed;
 }
 
 /**
- * Process nested arguments (input objects, arrays)
+ * Process a single argument value with schema-aware type handling.
+ *
+ * - Variables register their REAL declared type (not the old 'String'
+ *   hardcode that broke nested variables)
+ * - Enum-typed string values are wrapped in the ENUM_LITERAL marker so
+ *   formatArgumentValue emits them unquoted
+ * - Lists recurse per element, input objects recurse per field
  */
-function processNestedArgument(value: any, context: BuildContext): any {
-  if (Array.isArray(value)) {
-    return value.map(item => processNestedArgument(item, context));
+function processArgumentValue(
+  value: any,
+  argType: GraphQLInputType | undefined,
+  context: BuildContext
+): any {
+  if (isVariable(value)) {
+    context.variables.set(value.name, {
+      type: argType ? printType(argType) : 'String',
+      required: (argType ? isNonNullType(argType) : false) || value.required,
+    });
+    return `$${value.name}`;
   }
-  
-  if (typeof value === 'object' && value !== null) {
-    const processed: Record<string, any> = {};
-    for (const [key, val] of Object.entries(value)) {
-      if (isVariable(val)) {
-        context.variables.set(val.name, {
-          type: 'String', // We'd need more context to determine the exact type
-          required: val.required,
-        });
-        processed[key] = `$${val.name}`;
-      } else {
-        processed[key] = processNestedArgument(val, context);
-      }
+
+  let t = argType;
+  while (t && isNonNullType(t)) t = t.ofType;
+
+  if (t && isListType(t) && Array.isArray(value)) {
+    const inner = t.ofType;
+    return value.map(v => processArgumentValue(v, inner, context));
+  }
+
+  if (t && isEnumType(t) && typeof value === 'string') {
+    return { [ENUM_LITERAL]: value };
+  }
+
+  if (t && isInputObjectType(t) && value && typeof value === 'object' && !Array.isArray(value)) {
+    const fields = t.getFields();
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(value)) {
+      out[k] = processArgumentValue(v, fields[k]?.type, context);
     }
-    return processed;
+    return out;
   }
-  
+
+  // No type info — recurse structurally (backward compatible)
+  if (Array.isArray(value)) {
+    return value.map(v => processArgumentValue(v, undefined, context));
+  }
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {};
+    for (const [k, v] of Object.entries(value)) {
+      out[k] = processArgumentValue(v, undefined, context);
+    }
+    return out;
+  }
   return value;
 }
 
@@ -629,6 +652,10 @@ function buildSelectionString(selection: FieldSelection, indent: number): string
  * Format an argument value for GraphQL
  */
 function formatArgumentValue(value: any): string {
+  if (value && typeof value === 'object' && ENUM_LITERAL in value) {
+    // Enum literal — emitted bare, never quoted
+    return String((value as Record<string, any>)[ENUM_LITERAL]);
+  }
   if (typeof value === 'string' && value.startsWith('$')) {
     // Variable reference
     return value;

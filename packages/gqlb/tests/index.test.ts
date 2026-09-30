@@ -81,6 +81,7 @@ describe('gqlb query builder', () => {
     testScenario('14-array-result-access', import('./scenarios/14-array-result-access.ts').then(m => m.query));
     testScenario('15-wildcard-select-all', import('./scenarios/15-wildcard-select-all.ts').then(m => m.query));
     testScenario('16-wildcard-explicit-spread', import('./scenarios/16-wildcard-explicit-spread.ts').then(m => m.query));
+    testScenario('17-query-enum-args', import('./scenarios/17-query-enum-args.ts').then(m => m.query));
     
     // Runtime test for complete flow with mock client (object syntax)
     test('12-query-result-access (runtime execution)', async () => {
