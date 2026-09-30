@@ -544,6 +544,10 @@ function processArgumentValue(
     return `$${value.name}`;
   }
 
+  // null is a valid literal for any nullable type — pass through so
+  // formatArgumentValue emits `null` (never reaches the enum branch).
+  if (value === null || value === undefined) return value;
+
   let t = argType;
   while (t && isNonNullType(t)) t = t.ofType;
 

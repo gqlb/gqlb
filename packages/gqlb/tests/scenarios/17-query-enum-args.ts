@@ -40,5 +40,10 @@ export const query = builder.query(q => ({
   // (pullRequests(states: [OPEN])).
   byList: q.usersByStatus({ statuses: [Status.ACTIVE, Status.INACTIVE] }, user => ({
     id: user.id
+  })),
+
+  // null into a nullable enum arg stays a literal — must not throw.
+  byNull: q.searchUsers({ filter: { status: null } }, user => ({
+    id: user.id
   }))
 }));
