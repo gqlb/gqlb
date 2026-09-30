@@ -4,4 +4,7 @@ query {
     role
     status
   }
+  usersByStatus(statuses: PENDING) {
+    id
+  }
 }

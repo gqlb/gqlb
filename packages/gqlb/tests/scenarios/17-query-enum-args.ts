@@ -20,5 +20,12 @@ export const query = builder.query(q => ({
     id: user.id,
     role: user.role,
     status: user.status
+  })),
+
+  // Single value into a list-typed enum arg — valid GraphQL input
+  // coercion (states: OPEN ≡ states: [OPEN]); must still emit bare.
+  // (graphql-codegen types require an array; GraphQL doesn't.)
+  usersByStatus: q.usersByStatus({ statuses: Status.PENDING } as any, user => ({
+    id: user.id
   }))
 }));

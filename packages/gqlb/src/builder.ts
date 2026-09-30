@@ -546,9 +546,14 @@ function processArgumentValue(
   let t = argType;
   while (t && isNonNullType(t)) t = t.ofType;
 
-  if (t && isListType(t) && Array.isArray(value)) {
+  if (t && isListType(t)) {
     const inner = t.ofType;
-    return value.map(v => processArgumentValue(v, inner, context));
+    // GraphQL input coercion: a single value for a list type is valid
+    // (states: OPEN ≡ states: [OPEN]) — recurse into the element type.
+    if (Array.isArray(value)) {
+      return value.map(v => processArgumentValue(v, inner, context));
+    }
+    return processArgumentValue(value, inner, context);
   }
 
   if (t && isEnumType(t) && typeof value === 'string') {

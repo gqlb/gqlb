@@ -28,6 +28,9 @@ type Query {
   
   """Query with complex filter argument"""
   searchUsers(filter: UserFilter): [User!]!
+
+  """Query with a list-typed enum argument"""
+  usersByStatus(statuses: [Status!]): [User!]!
   
   """Query returning nullable type"""
   post(id: ID!): Post
