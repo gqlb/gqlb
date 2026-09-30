@@ -500,8 +500,9 @@ function createFieldSelection(
 /**
  * Marker key for enum literal values — strings that must be emitted
  * unquoted (GraphQL enum values are not String literals).
+ * A Symbol so user-provided objects can never collide with the marker.
  */
-const ENUM_LITERAL = '__gqlbEnum';
+const ENUM_LITERAL = Symbol('gqlb:enum');
 
 /**
  * Process field arguments and extract variables
@@ -556,8 +557,16 @@ function processArgumentValue(
     return processArgumentValue(value, inner, context);
   }
 
-  if (t && isEnumType(t) && typeof value === 'string') {
-    return { [ENUM_LITERAL]: value };
+  if (t && isEnumType(t)) {
+    // Fail closed: an invalid enum member is a bug, and emitting an
+    // unchecked string raw would let arbitrary tokens corrupt the query.
+    if (typeof value === 'string' && t.getValue(value)) {
+      return { [ENUM_LITERAL]: value };
+    }
+    throw new Error(
+      `gqlb: '${String(value)}' is not a member of enum ${t.name}` +
+        ` (members: ${t.getValues().map(v => v.name).join(', ')})`
+    );
   }
 
   if (t && isInputObjectType(t) && value && typeof value === 'object' && !Array.isArray(value)) {
@@ -659,7 +668,7 @@ function buildSelectionString(selection: FieldSelection, indent: number): string
 function formatArgumentValue(value: any): string {
   if (value && typeof value === 'object' && ENUM_LITERAL in value) {
     // Enum literal — emitted bare, never quoted
-    return String((value as Record<string, any>)[ENUM_LITERAL]);
+    return String((value as Record<PropertyKey, any>)[ENUM_LITERAL]);
   }
   if (typeof value === 'string' && value.startsWith('$')) {
     // Variable reference

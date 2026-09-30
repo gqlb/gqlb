@@ -1,10 +1,13 @@
-query {
-  searchUsers(filter: {role: ADMIN, status: ACTIVE}) {
+query($ageVar: Int) {
+  searchUsers(filter: {role: ADMIN, status: ACTIVE, age: {gte: $ageVar}}) {
     id
     role
     status
   }
-  usersByStatus(statuses: PENDING) {
+  bySingle: usersByStatus(statuses: PENDING) {
+    id
+  }
+  byList: usersByStatus(statuses: [ACTIVE, INACTIVE]) {
     id
   }
 }
